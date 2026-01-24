@@ -452,7 +452,7 @@
         isSpecialMode = special;
         document.getElementById('btnNormal').className = special ? 'mode-btn' : 'mode-btn active';
         document.getElementById('btnSpecial').className = special ? 'mode-btn active-special' : 'mode-btn';
-        document.getElementById('scheduleHeader').innerText = special ? "Special Schedule (Ends 13:00)" : "Today's Schedule";
+        document.getElementById('scheduleHeader').innerText = special ? "Special Schedule" : "Today's Schedule";
         localStorage.setItem('specialMode', special);
         renderApp();
     }
@@ -604,4 +604,5 @@
 </script>
 </body>
 </html>
+
 
