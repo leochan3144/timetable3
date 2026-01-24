@@ -6,11 +6,18 @@
     <title>My Class Dashboard</title>
     <style>
         :root {
+            /* Light Mode Defaults */
             --bg-color: #F2F2F7;
             --card-bg: #FFFFFF;
             --primary: #007AFF;
             --text-main: #000000;
             --text-sub: #8E8E93;
+            --separator: #E5E5EA;
+            --btn-bg: #E5E5EA;
+            --btn-text: #000000;
+            --progress-track: #E5E5EA;
+            
+            /* Subject Colors */
             --red: #FF3B30;
             --green: #34C759;
             --yellow: #FF9500;
@@ -19,117 +26,359 @@
             --gray: #8E8E93;
         }
 
+        [data-theme="dark"] {
+            /* Dark Mode Overrides */
+            --bg-color: #000000;
+            --card-bg: #1C1C1E;
+            --text-main: #FFFFFF;
+            --text-sub: #98989D;
+            --separator: #38383A;
+            --btn-bg: #2C2C2E;
+            --btn-text: #FFFFFF;
+            --progress-track: #3A3A3C;
+        }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--bg-color);
             color: var(--text-main);
             margin: 0;
             padding-top: env(safe-area-inset-top);
             padding-bottom: env(safe-area-inset-bottom);
+            padding-left: env(safe-area-inset-left);
+            padding-right: env(safe-area-inset-right);
+            -webkit-tap-highlight-color: transparent;
+            transition: background-color 0.3s, color 0.3s;
         }
 
-        .app-container { display: flex; flex-direction: column; height: 100vh; }
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+        }
 
-        header { padding: 10px 20px; background: var(--bg-color); }
-        .clock { font-size: 2.8rem; font-weight: 800; letter-spacing: -0.03em; }
+        /* --- HEADER --- */
+        header {
+            padding: 10px 20px 5px 20px;
+            background: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: background-color 0.3s;
+        }
+
+        .header-top {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+
+        .clock-container {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .clock {
+            font-size: 2.2rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            line-height: 1;
+        }
         
-        /* Special Toggle */
-        .mode-toggle {
+        .date-display {
+            font-size: 0.9rem;
+            color: var(--text-sub);
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        /* DARK MODE TOGGLE */
+        .theme-toggle-btn {
+            background: var(--btn-bg);
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            background: #E5E5EA;
-            padding: 8px 15px;
+            justify-content: center;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: transform 0.2s, background-color 0.3s;
+            color: var(--text-main);
+        }
+        .theme-toggle-btn:active { transform: scale(0.9); }
+
+        /* --- MODE TOGGLE --- */
+        .mode-toggle {
+            background: var(--btn-bg);
+            padding: 4px;
             border-radius: 12px;
+            display: flex;
+            gap: 5px;
             margin-bottom: 10px;
+            width: 100%;
+            box-sizing: border-box;
+            transition: background-color 0.3s;
         }
-        .mode-toggle span { font-weight: 600; font-size: 0.9rem; }
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 44px;
-            height: 24px;
-        }
-        .switch input { opacity: 0; width: 0; height: 0; }
-        .slider {
-            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
-            background-color: #ccc; transition: .4s; border-radius: 24px;
-        }
-        .slider:before {
-            position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px;
-            background-color: white; transition: .4s; border-radius: 50%;
-        }
-        input:checked + .slider { background-color: var(--purple); }
-        input:checked + .slider:before { transform: translateX(20px); }
 
+        .mode-btn {
+            flex: 1;
+            padding: 8px 16px;
+            border-radius: 9px;
+            border: none;
+            background: transparent;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-sub);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .mode-btn.active {
+            background: var(--card-bg);
+            color: var(--text-main);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+        }
+        .mode-btn.active-special {
+            background: var(--purple);
+            color: white;
+            box-shadow: 0 2px 8px rgba(175, 82, 222, 0.4);
+        }
+
+        /* --- DAY SCROLLER --- */
         .day-scroller {
-            display: flex; overflow-x: auto; gap: 10px; padding: 10px 20px;
-            background: var(--bg-color); position: sticky; top: 0; z-index: 10;
+            display: flex;
+            overflow-x: auto;
+            gap: 12px;
+            padding: 5px 20px 15px 20px;
+            background: var(--bg-color);
+            scrollbar-width: none; 
+            width: 100%;
+            box-sizing: border-box;
+            transition: background-color 0.3s;
         }
+        .day-scroller::-webkit-scrollbar { display: none; }
+
         .day-btn {
-            flex: 0 0 auto; background: #E5E5EA; border: none; padding: 8px 18px;
-            border-radius: 18px; font-weight: 600;
+            flex: 0 0 auto;
+            background: var(--btn-bg);
+            color: var(--text-main);
+            border: none;
+            padding: 8px 18px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
         }
-        .day-btn.active { background: var(--text-main); color: #FFF; }
 
-        .content-area { flex: 1; overflow-y: auto; padding: 20px; }
-        .card { background: var(--card-bg); border-radius: 22px; padding: 20px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
-        .card-label { text-transform: uppercase; font-size: 0.7rem; font-weight: 700; color: var(--text-sub); margin-bottom: 5px; }
-        .lesson-title { font-size: 1.5rem; font-weight: 700; }
+        .day-btn.active {
+            background: var(--text-main);
+            color: var(--bg-color); /* Contrast */
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        /* --- CONTENT --- */
+        .content-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0 20px 40px 20px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 22px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.04);
+            position: relative;
+            overflow: hidden;
+            transition: background-color 0.3s;
+        }
+
+        .card-label {
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            color: var(--text-sub);
+            margin-bottom: 8px;
+        }
+
+        .lesson-title {
+            font-size: 1.7rem;
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 6px;
+            letter-spacing: -0.02em;
+        }
+
+        .lesson-meta {
+            font-size: 1.05rem;
+            color: var(--text-sub);
+            font-weight: 500;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* --- PROGRESS BAR (Updated Position) --- */
+        .progress-wrapper { 
+            margin-top: 25px; 
+        }
         
-        .progress-track { background: #E5E5EA; height: 6px; border-radius: 10px; margin-top: 15px; overflow: hidden; }
-        .progress-fill { height: 100%; width: 0%; transition: width 1s linear; }
+        .progress-header {
+            display: flex;
+            justify-content: flex-end; /* Aligns text to right */
+            margin-bottom: 8px;        /* Spacing between text and bar */
+        }
 
-        .next-card { display: flex; align-items: center; gap: 12px; padding: 12px 18px; }
-        .next-ind { width: 4px; height: 30px; border-radius: 4px; background: var(--text-sub); }
+        .time-remaining {
+            font-size: 0.95rem;
+            font-weight: 700;
+            text-align: right;
+            /* Color set dynamically via JS */
+        }
 
-        .list-container { background: var(--card-bg); border-radius: 20px; overflow: hidden; margin-top: 10px; }
-        .list-item { display: grid; grid-template-columns: 85px 70px 1fr; padding: 12px; border-bottom: 1px solid #F2F2F7; font-size: 0.85rem; }
-        .active-row { background-color: #F0F8FF; font-weight: bold; }
+        .progress-track {
+            background-color: var(--progress-track);
+            border-radius: 100px;
+            height: 12px;
+            width: 100%;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            border-radius: 100px;
+            transition: width 1s linear;
+        }
 
-        .subj-red { color: var(--red); } .subj-green { color: var(--green); }
-        .subj-yellow { color: var(--yellow); } .subj-blue { color: var(--blue); }
-        .subj-break { color: var(--purple); font-style: italic; }
-        .subj-free { color: var(--gray); opacity: 0.5; }
+
+        .next-card {
+            background: var(--card-bg);
+            border: 1px solid var(--separator);
+            display: flex;
+            align-items: center;
+            padding: 16px 20px;
+            gap: 15px;
+        }
+        
+        .next-indicator {
+            width: 4px;
+            height: 40px;
+            border-radius: 4px;
+            background: var(--text-sub);
+        }
+
+        .next-info h4 { margin: 0; font-size: 1.1rem; font-weight: 700; }
+        .next-info p { margin: 2px 0 0 0; font-size: 0.9rem; color: var(--text-sub); }
+
+        .schedule-list h3 {
+            margin: 10px 0 15px 5px;
+            font-size: 1.3rem;
+            font-weight: 700;
+        }
+        
+        .list-container {
+            background: var(--card-bg);
+            border-radius: 22px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+            transition: background-color 0.3s;
+        }
+
+        .list-item {
+            display: grid;
+            grid-template-columns: 55px 70px 1fr;
+            align-items: center;
+            padding: 16px;
+            border-bottom: 1px solid var(--separator);
+        }
+        .list-item:last-child { border-bottom: none; }
+        .list-item.active-row { 
+            background-color: rgba(0, 122, 255, 0.1); 
+        }
+        
+        .col-time { font-size: 0.85rem; font-weight: 600; color: var(--text-main); }
+        .col-period { font-size: 0.75rem; text-transform: uppercase; color: var(--text-sub); font-weight: 700; }
+        .col-subject { font-size: 0.95rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        /* COLORS */
+        .subj-red { color: var(--red); }
+        .subj-green { color: var(--green); }
+        .subj-yellow { color: var(--yellow); }
+        .subj-blue { color: var(--blue); }
+        .subj-purple { color: var(--purple); font-style: italic;}
+        .subj-free { color: var(--gray); font-style: italic; opacity: 0.6; }
+
     </style>
 </head>
 <body>
 
 <div class="app-container">
     <header>
-        <div class="mode-toggle">
-            <span>Special Timetable</span>
-            <label class="switch">
-                <input type="checkbox" id="specialToggle">
-                <span class="slider"></span>
-            </label>
+        <div class="header-top">
+            <div class="clock-container">
+                <div class="date-display" id="dateDisplay">--</div>
+                <div class="clock" id="clock">00:00</div>
+            </div>
+            
+            <button class="theme-toggle-btn" id="themeToggle" onclick="toggleTheme()">
+                🌙
+            </button>
         </div>
-        <div class="clock" id="clock">00:00</div>
+        
+        <div class="mode-toggle">
+            <button class="mode-btn active" id="btnNormal" onclick="setMode(false)">Normal</button>
+            <button class="mode-btn" id="btnSpecial" onclick="setMode(true)">Special (Half Day)</button>
+        </div>
+
+        <div class="day-scroller" id="daySelector"></div>
     </header>
 
-    <div class="day-scroller" id="daySelector"></div>
-
     <div class="content-area">
-        <div class="card">
-            <div class="card-label">Now</div>
+        <div class="card" id="currentCard">
+            <div class="card-label">Happening Now</div>
             <div class="lesson-title" id="currentTitle">Loading...</div>
-            <div class="progress-track"><div class="progress-fill" id="progressBar"></div></div>
-        </div>
-
-        <div class="card next-card">
-            <div class="next-ind" id="nextIndicator"></div>
-            <div>
-                <div class="card-label">Next</div>
-                <div id="nextTitle" style="font-weight:700;">--</div>
+            <div class="lesson-meta">
+                <span id="currentTimeRange">--:--</span>
+                <span id="currentPeriodBadge"></span>
+            </div>
+            
+            <div class="progress-wrapper">
+                <div class="progress-header">
+                    <div class="time-remaining" id="timeRemaining">-- min left</div>
+                </div>
+                <div class="progress-track">
+                    <div class="progress-fill" id="progressBar"></div>
+                </div>
             </div>
         </div>
 
-        <h3 style="margin-left:5px; font-size:1.1rem;">Full Schedule</h3>
-        <div class="list-container" id="listContainer"></div>
+        <div class="card next-card" id="nextCard">
+            <div class="next-indicator" id="nextIndicator"></div>
+            <div class="next-info">
+                <div class="card-label" style="margin-bottom:0; font-size:0.65rem;">Up Next</div>
+                <h4 id="nextTitle">--</h4>
+                <p id="nextTime">--</p>
+            </div>
+        </div>
+
+        <div class="schedule-list">
+            <h3 id="scheduleHeader">Today's Schedule</h3>
+            <div class="list-container" id="listContainer"></div>
+        </div>
     </div>
 </div>
 
 <script>
+    // --- 1. DATA CONFIGURATION ---
     const normalSlots = [
         { s: "08:00", e: "08:25", type: "period", label: "Class Period" },
         { s: "08:25", e: "09:00", type: "slot", id: 1 },
@@ -163,80 +412,195 @@
     ];
 
     const scheduleData = {
-        1: { 1: "4C,4D MAM1 (304)", 2: "4C,4D MAM1 (304)", 4: "1C MATH (103)", 5: "5C MACO (403)", 7: "4D MACO (304)" },
-        2: { 1: "4D MACO (304)", 6: "5C MACO (403)", 7: "1C MATH (103)", 9: "1A...1D IS" },
-        3: { 2: "4D MACO (304)", 5: "5C MACO (403)", 7: "1C MATH (103)", 8: "1C MATH (103)" },
-        4: { 1: "1C MATH (103)", 4: "5C MACO (403)", 5: "5C MACO (403)", 7: "4D MACO (304)" },
-        5: { 3: "1C MATH (103)", 4: "5C MACO (403)", 6: "4D MACO (304)" },
-        6: { 1: "4C,4D MAM1 (304)", 2: "4C,4D MAM1 (304)", 3: "1C MATH (103)", 5: "4D MACO (304)" }
+        1: { 1: "4C,4D MAM1 (304)", 2: "4C,4D MAM1 (304)", 3: "", 4: "1C MATH (103)", 5: "5C MACO (403)", 6: "", 7: "4D MACO (304)", 8: "", 9: "" },
+        2: { 1: "4D MACO (304)", 2: "", 3: "", 4: "", 5: "", 6: "5C MACO (403)", 7: "1C MATH (103)", 8: "", 9: "1A...1D IS (Various)" },
+        3: { 1: "", 2: "4D MACO (304)", 3: "", 4: "", 5: "5C MACO (403)", 6: "", 7: "1C MATH (103)", 8: "1C MATH (103)", 9: "" },
+        4: { 1: "1C MATH (103)", 2: "", 3: "", 4: "5C MACO (403)", 5: "5C MACO (403)", 6: "", 7: "4D MACO (304)", 8: "", 9: "" },
+        5: { 1: "", 2: "", 3: "1C MATH (103)", 4: "5C MACO (403)", 5: "", 6: "4D MACO (304)", 7: "", 8: "", 9: "" },
+        6: { 1: "4C,4D MAM1 (304)", 2: "4C,4D MAM1 (304)", 3: "1C MATH (103)", 4: "", 5: "4D MACO (304)", 6: "", 7: "", 8: "", 9: "" }
     };
 
+    // --- 2. STATE ---
     let selectedDay = 1;
-    let isSpecial = false;
+    let isSpecialMode = false;
+    let isDarkMode = false;
 
-    function parseTime(t) { const [h, m] = t.split(':').map(Number); return h * 60 + m; }
+    // --- 3. LOGIC ---
+    function parseTime(timeStr) {
+        const [h, m] = timeStr.split(':').map(Number);
+        return h * 60 + m;
+    }
 
-    function getColor(name, type) {
-        if (type === 'break' || name === 'Class Period' || name === 'Roll Call') return 'purple';
-        if (!name || name === 'Free Period') return 'free';
-        if (name.includes("MAM1")) return "red";
-        if (name.includes("MATH")) return "green";
-        if (name.includes("5C MACO")) return "yellow";
-        if (name.includes("4D MACO")) return "blue";
+    function getColorType(name, type) {
+        if(type === 'break' || name.includes("Roll Call")) return 'purple';
+        if(name === 'Free Period' || name === "") return 'free';
+        if(name.includes("MAM1")) return "red";
+        if(name.includes("1C MATH")) return "green";
+        if(name.includes("5C MACO")) return "yellow";
+        if(name.includes("4D MACO")) return "blue";
         return "black";
     }
 
-    function render() {
-        const now = new Date();
-        document.getElementById('clock').innerText = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', hour12: false});
-        const curMin = now.getHours() * 60 + now.getMinutes();
-        const activeSlots = isSpecial ? specialSlots : normalSlots;
+    function toggleTheme() {
+        isDarkMode = !isDarkMode;
+        document.documentElement.setAttribute('data-theme', isDarkMode ? 'dark' : 'light');
+        document.getElementById('themeToggle').innerText = isDarkMode ? '☀️' : '🌙';
+        localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+    }
 
-        let dayList = activeSlots.map(s => {
-            let name = (s.type === 'slot') ? (scheduleData[selectedDay][s.id] || "Free Period") : s.label;
-            return { ...s, name, sMin: parseTime(s.s), eMin: parseTime(s.e) };
+    function setMode(special) {
+        isSpecialMode = special;
+        document.getElementById('btnNormal').className = special ? 'mode-btn' : 'mode-btn active';
+        document.getElementById('btnSpecial').className = special ? 'mode-btn active-special' : 'mode-btn';
+        document.getElementById('scheduleHeader').innerText = special ? "Special Schedule (Ends 13:00)" : "Today's Schedule";
+        localStorage.setItem('specialMode', special);
+        renderApp();
+    }
+
+    function renderApp() {
+        const now = new Date();
+        document.getElementById('clock').innerText = now.toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit', hour12: false});
+        const options = { weekday: 'long', month: 'short', day: 'numeric' };
+        document.getElementById('dateDisplay').innerText = now.toLocaleDateString('en-US', options);
+
+        const currentMinutes = now.getHours() * 60 + now.getMinutes();
+        
+        // Active Schedule
+        const activeSlots = isSpecialMode ? specialSlots : normalSlots;
+        let daySchedule = [];
+        
+        activeSlots.forEach(slot => {
+            let name = "";
+            let periodLabel = "";
+            
+            if (slot.type === 'break' || slot.type === 'period') {
+                name = slot.label;
+            } else {
+                name = scheduleData[selectedDay][slot.id] || "Free Period";
+                periodLabel = "Lesson " + slot.id;
+            }
+            
+            daySchedule.push({
+                ...slot,
+                startMin: parseTime(slot.s),
+                endMin: parseTime(slot.e),
+                name, periodLabel
+            });
         });
 
-        let cur = dayList.find(s => curMin >= s.sMin && curMin < s.eMin);
-        let nxt = dayList.find(s => s.sMin > curMin);
+        // Find Status
+        let current = daySchedule.find(s => currentMinutes >= s.startMin && currentMinutes < s.endMin);
+        let next = daySchedule.find(s => s.startMin > currentMinutes);
 
-        // UI Updates
-        const title = document.getElementById('currentTitle');
-        const bar = document.getElementById('progressBar');
-        if (cur) {
-            title.innerText = cur.name;
-            title.className = "lesson-title subj-" + getColor(cur.name, cur.type);
-            bar.style.width = ((curMin - cur.sMin) / (cur.eMin - cur.sMin) * 100) + "%";
-            bar.style.backgroundColor = `var(--${getColor(cur.name, cur.type)})`;
+        // --- RENDER CURRENT ---
+        const titleEl = document.getElementById('currentTitle');
+        const rangeEl = document.getElementById('currentTimeRange');
+        const progBar = document.getElementById('progressBar');
+        const remainEl = document.getElementById('timeRemaining');
+
+        if (current) {
+            titleEl.innerText = current.name;
+            rangeEl.innerText = `${current.periodLabel ? current.periodLabel + "  •  " : ""}${current.s} - ${current.e}`;
+            
+            const colorType = getColorType(current.name, current.type);
+            const cssClass = colorType === 'free' ? 'subj-free' : `subj-${colorType}`;
+            // Use CSS var for JS background
+            const bgClass = colorType === 'free' ? '#8E8E93' : `var(--${colorType === 'black' ? 'gray' : colorType})`;
+
+            titleEl.className = "lesson-title " + cssClass;
+            progBar.style.backgroundColor = bgClass;
+            remainEl.style.color = bgClass;
+
+            const total = current.endMin - current.startMin;
+            const elapsed = currentMinutes - current.startMin;
+            const percent = (elapsed / total) * 100;
+            progBar.style.width = `${percent}%`;
+            remainEl.innerText = `${total - elapsed} min left`;
         } else {
-            title.innerText = curMin < dayList[0].sMin ? "Before School" : "School Over";
-            bar.style.width = "0%";
+            progBar.style.width = "0%";
+            remainEl.innerText = "";
+            titleEl.className = "lesson-title";
+            if (currentMinutes < daySchedule[0].startMin) {
+                titleEl.innerText = "Before School";
+                rangeEl.innerText = "Starts at " + daySchedule[0].s;
+            } else {
+                titleEl.innerText = "School Over";
+                rangeEl.innerText = "See you tomorrow!";
+            }
         }
 
-        document.getElementById('nextTitle').innerText = nxt ? nxt.name : "None";
-        document.getElementById('nextIndicator').style.backgroundColor = nxt ? `var(--${getColor(nxt.name, nxt.type)})` : "#ccc";
+        // --- RENDER NEXT ---
+        const nextTitle = document.getElementById('nextTitle');
+        const nextTime = document.getElementById('nextTime');
+        const nextInd = document.getElementById('nextIndicator');
+        
+        if (next) {
+            nextTitle.innerText = next.name;
+            nextTime.innerText = `${next.periodLabel ? next.periodLabel + " • " : ""}${next.s}`;
+            
+            const cType = getColorType(next.name, next.type);
+            const cHex = cType === 'free' ? '#C7C7CC' : `var(--${cType === 'black' ? 'gray' : cType})`;
+            
+            nextTitle.className = cType === 'free' ? 'subj-free' : `subj-${cType}`;
+            nextInd.style.backgroundColor = cHex;
+        } else {
+            nextTitle.innerText = "Relax";
+            nextTime.innerText = "No more classes";
+            nextInd.style.backgroundColor = "var(--separator)";
+            nextTitle.className = "";
+        }
 
+        // --- RENDER LIST ---
+        const listContainer = document.getElementById('listContainer');
         let html = "";
-        dayList.forEach(s => {
-            const active = (cur && cur.s === s.s) ? "active-row" : "";
-            html += `<div class="list-item ${active}">
-                <span>${s.s}-${s.e}</span>
-                <span style="color:#8E8E93">${s.id ? 'Lesson '+s.id : ''}</span>
-                <span class="subj-${getColor(s.name, s.type)}">${s.name}</span>
+        daySchedule.forEach(s => {
+            const isActive = (current && current.s === s.s) ? "active-row" : "";
+            const cType = getColorType(s.name, s.type);
+            const textClass = cType === 'free' ? 'subj-free' : `subj-${cType}`;
+            
+            html += `
+            <div class="list-item ${isActive}">
+                <div class="col-time">${s.s}</div>
+                <div class="col-period">${s.periodLabel}</div>
+                <div class="col-subject ${textClass}">${s.name}</div>
             </div>`;
         });
-        document.getElementById('listContainer').innerHTML = html;
+        listContainer.innerHTML = html;
     }
 
-    document.getElementById('specialToggle').onchange = (e) => { isSpecial = e.target.checked; render(); };
+    // --- INIT ---
+    function init() {
+        // Load Saved Settings
+        const savedTheme = localStorage.getItem('theme');
+        if(savedTheme === 'dark') {
+            toggleTheme();
+        }
+        
+        const savedMode = localStorage.getItem('specialMode');
+        if(savedMode === 'true') {
+            setMode(true);
+        }
 
-    const ds = document.getElementById('daySelector');
-    for(let i=1; i<=6; i++){
-        const b = document.createElement('button'); b.className = `day-btn ${i===1?'active':''}`; b.innerText = "Day "+i;
-        b.onclick = () => { document.querySelectorAll('.day-btn').forEach(x=>x.classList.remove('active')); b.classList.add('active'); selectedDay=i; render(); };
-        ds.appendChild(b);
+        // Build Day Buttons
+        const scroller = document.getElementById('daySelector');
+        for(let i=1; i<=6; i++) {
+            const btn = document.createElement('button');
+            btn.className = `day-btn ${i===1?'active':''}`;
+            btn.innerText = `Day ${i}`;
+            btn.onclick = (e) => {
+                document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                selectedDay = i;
+                renderApp();
+            };
+            scroller.appendChild(btn);
+        }
+        
+        setInterval(renderApp, 1000);
+        renderApp();
     }
-    setInterval(render, 1000); render();
+
+    init();
 </script>
 </body>
 </html>
