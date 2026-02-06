@@ -49,6 +49,8 @@
             padding-right: env(safe-area-inset-right);
             -webkit-tap-highlight-color: transparent;
             transition: background-color 0.3s, color 0.3s;
+            /* Prevent body scroll bounce */
+            overscroll-behavior-y: none;
         }
 
         .app-container {
@@ -66,6 +68,7 @@
             flex-direction: column;
             align-items: center;
             transition: background-color 0.3s;
+            flex-shrink: 0; /* Header should not shrink */
         }
 
         .header-top {
@@ -183,18 +186,37 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         }
 
-        /* --- CONTENT --- */
+        /* --- CONTENT AREA (MODIFIED FOR PINNING) --- */
         .content-area {
             flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden; /* Stops global scrolling */
+            padding: 0; /* Removed padding from here */
+        }
+
+        /* New Wrapper for the pinned "Happening Now" card */
+        .pinned-section {
+            padding: 0 20px;
+            background: var(--bg-color);
+            transition: background-color 0.3s;
+            flex-shrink: 0;
+            z-index: 10;
+        }
+
+        /* New Wrapper for the scrolling list */
+        .scrolling-section {
+            flex: 1;
             overflow-y: auto;
-            padding: 0 20px 40px 20px;
+            padding: 10px 20px 40px 20px;
+            -webkit-overflow-scrolling: touch;
         }
 
         .card {
             background: var(--card-bg);
             border-radius: 22px;
             padding: 24px;
-            margin-bottom: 20px;
+            /* margin-bottom: 20px; Removed bottom margin to handle spacing via containers */
             box-shadow: 0 8px 24px rgba(0,0,0,0.04);
             position: relative;
             overflow: hidden;
@@ -227,22 +249,21 @@
             align-items: center;
         }
 
-        /* --- PROGRESS BAR (Updated Position) --- */
+        /* --- PROGRESS BAR --- */
         .progress-wrapper { 
             margin-top: 25px; 
         }
         
         .progress-header {
             display: flex;
-            justify-content: flex-end; /* Aligns text to right */
-            margin-bottom: 8px;        /* Spacing between text and bar */
+            justify-content: flex-end;
+            margin-bottom: 8px;
         }
 
         .time-remaining {
             font-size: 0.95rem;
             font-weight: 700;
             text-align: right;
-            /* Color set dynamically via JS */
         }
 
         .progress-track {
@@ -259,7 +280,6 @@
             transition: width 1s linear;
         }
 
-
         .next-card {
             background: var(--card-bg);
             border: 1px solid var(--separator);
@@ -267,6 +287,7 @@
             align-items: center;
             padding: 16px 20px;
             gap: 15px;
+            margin-bottom: 20px; /* Re-added margin only for items in scroll list */
         }
         
         .next-indicator {
@@ -343,42 +364,62 @@
     </header>
 
     <div class="content-area">
-        <div class="card" id="currentCard">
-            <div class="card-label">Happening Now</div>
-            <div class="lesson-title" id="currentTitle">Loading...</div>
-            <div class="lesson-meta">
-                <span id="currentTimeRange">--:--</span>
-                <span id="currentPeriodBadge"></span>
-            </div>
-            
-            <div class="progress-wrapper">
-                <div class="progress-header">
-                    <div class="time-remaining" id="timeRemaining">-- min left</div>
+        <div class="pinned-section">
+            <div class="card" id="currentCard">
+                <div class="card-label">Happening Now</div>
+                <div class="lesson-title" id="currentTitle">Loading...</div>
+                <div class="lesson-meta">
+                    <span id="currentTimeRange">--:--</span>
+                    <span id="currentPeriodBadge"></span>
                 </div>
-                <div class="progress-track">
-                    <div class="progress-fill" id="progressBar"></div>
+                
+                <div class="progress-wrapper">
+                    <div class="progress-header">
+                        <div class="time-remaining" id="timeRemaining">-- min left</div>
+                    </div>
+                    <div class="progress-track">
+                        <div class="progress-fill" id="progressBar"></div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div class="card next-card" id="nextCard">
-            <div class="next-indicator" id="nextIndicator"></div>
-            <div class="next-info">
-                <div class="card-label" style="margin-bottom:0; font-size:0.65rem;">Up Next</div>
-                <h4 id="nextTitle">--</h4>
-                <p id="nextTime">--</p>
+        <div class="scrolling-section">
+            <div class="card next-card" id="nextCard">
+                <div class="next-indicator" id="nextIndicator"></div>
+                <div class="next-info">
+                    <div class="card-label" style="margin-bottom:0; font-size:0.65rem;">Up Next</div>
+                    <h4 id="nextTitle">--</h4>
+                    <p id="nextTime">--</p>
+                </div>
             </div>
-        </div>
 
-        <div class="schedule-list">
-            <h3 id="scheduleHeader">Today's Schedule</h3>
-            <div class="list-container" id="listContainer"></div>
+            <div class="schedule-list">
+                <h3 id="scheduleHeader">Today's Schedule</h3>
+                <div class="list-container" id="listContainer"></div>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
     // --- 1. DATA CONFIGURATION ---
+    
+    // CALENDAR DATA (Format: "D/M/YYYY": CycleNumber)
+    const calendarData = {
+        "6/2/2026": 3, "9/2/2026": 4, "10/2/2026": 5, "11/2/2026": 6, "12/2/2026": 1, "13/2/2026": 2,
+        "25/2/2026": 3, "26/2/2026": 4, "27/2/2026": 5, "3/3/2026": 6, "4/3/2026": 1, "5/3/2026": 2,
+        "6/3/2026": 3, "9/3/2026": 4, "10/3/2026": 5, "11/3/2026": 6, "12/3/2026": 1, "16/3/2026": 2,
+        "17/3/2026": 3, "18/3/2026": 4, "19/3/2026": 5, "20/3/2026": 6, "23/3/2026": 1, "24/3/2026": 2,
+        "25/3/2026": 3, "26/3/2026": 4, "9/4/2026": 5, "10/4/2026": 6, "13/4/2026": 1, "14/4/2026": 2,
+        "15/4/2026": 3, "16/4/2026": 4, "17/4/2026": 5, "20/4/2026": 6, "21/4/2026": 1, "22/4/2026": 2,
+        "23/4/2026": 3, "24/4/2026": 4, "27/4/2026": 5, "28/4/2026": 6, "29/4/2026": 1, "30/4/2026": 2,
+        "4/5/2026": 3, "5/5/2026": 4, "6/5/2026": 5, "7/5/2026": 6, "8/5/2026": 1, "11/5/2026": 2,
+        "12/5/2026": 3, "13/5/2026": 4, "14/5/2026": 5, "18/5/2026": 6, "19/5/2026": 1, "20/5/2026": 2,
+        "21/5/2026": 3, "22/5/2026": 4, "26/5/2026": 5, "27/5/2026": 6, "28/5/2026": 1, "29/5/2026": 2,
+        "1/6/2026": 3, "2/6/2026": 4, "3/6/2026": 5
+    };
+
     const normalSlots = [
         { s: "08:00", e: "08:25", type: "period", label: "Class Period" },
         { s: "08:25", e: "09:00", type: "slot", id: 1 },
@@ -457,6 +498,34 @@
         renderApp();
     }
 
+    function updateDaySelection(newDay) {
+        selectedDay = newDay;
+        // Visual update for buttons
+        document.querySelectorAll('.day-btn').forEach(btn => {
+            if (btn.innerText === `Day ${newDay}`) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+        renderApp();
+    }
+
+    function autoSelectDay() {
+        const now = new Date();
+        // Construct date key: D/M/YYYY (No leading zeros for day/month to match data)
+        const dateKey = `${now.getDate()}/${now.getMonth() + 1}/${now.getFullYear()}`;
+        
+        if (calendarData[dateKey]) {
+            const dayFromCalendar = calendarData[dateKey];
+            console.log(`Date Match: ${dateKey} is Day ${dayFromCalendar}`);
+            updateDaySelection(dayFromCalendar);
+        } else {
+            // Optional: If today is not in calendar (weekend/holiday), you could default to Day 1 or keep last selection
+            console.log(`No schedule found for ${dateKey}, using default.`);
+        }
+    }
+
     function renderApp() {
         const now = new Date();
         document.getElementById('clock').innerText = now.toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit', hour12: false});
@@ -504,7 +573,6 @@
             
             const colorType = getColorType(current.name, current.type);
             const cssClass = colorType === 'free' ? 'subj-free' : `subj-${colorType}`;
-            // Use CSS var for JS background
             const bgClass = colorType === 'free' ? '#8E8E93' : `var(--${colorType === 'black' ? 'gray' : colorType})`;
 
             titleEl.className = "lesson-title " + cssClass;
@@ -587,15 +655,13 @@
             const btn = document.createElement('button');
             btn.className = `day-btn ${i===1?'active':''}`;
             btn.innerText = `Day ${i}`;
-            btn.onclick = (e) => {
-                document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active'));
-                e.target.classList.add('active');
-                selectedDay = i;
-                renderApp();
-            };
+            btn.onclick = () => updateDaySelection(i); // Updated to use new helper
             scroller.appendChild(btn);
         }
         
+        // Auto-select day based on calendar
+        autoSelectDay();
+
         setInterval(renderApp, 1000);
         renderApp();
     }
@@ -604,6 +670,3 @@
 </script>
 </body>
 </html>
-
-
-
